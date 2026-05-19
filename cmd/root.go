@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/lmorchard/github-to-markdown/internal/config"
 	"github.com/sirupsen/logrus"
@@ -72,8 +73,6 @@ func init() {
 	_ = viper.BindPFlag("template", rootCmd.Flags().Lookup("template"))
 	_ = viper.BindPFlag("include_private", rootCmd.Flags().Lookup("include-private"))
 
-	// Map env vars: GITHUB_TOKEN -> token
-	_ = viper.BindEnv("token", "GITHUB_TOKEN")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -93,7 +92,10 @@ func initConfig() {
 	viper.SetDefault("debug", false)
 	viper.SetDefault("log_json", false)
 
-	// Read in environment variables that match
+	// Read in environment variables that match. Every config key is reachable
+	// via GITHUB_<KEY> (e.g. token -> GITHUB_TOKEN, include_private -> GITHUB_INCLUDE_PRIVATE).
+	viper.SetEnvPrefix("GITHUB")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
 	// If a config file is found, read it in

@@ -88,16 +88,18 @@ template, include-private) come from the config file or environment.
 | Flag | Env | Description | Default |
 |---|---|---|---|
 | `--token` | `GITHUB_TOKEN` | GitHub personal access token | (required) |
-| `--user` | | GitHub username to fetch | authenticated user |
-| `--since` | | Start of window (`YYYY-MM-DD` or RFC3339) | 7 days ago |
-| `--until` | | End of window (`YYYY-MM-DD` or RFC3339) | now |
-| `-o`, `--output` | | Write output to a file | stdout |
-| `--template` | | Path to a custom template file | embedded default |
-| `--include-private` | | Include events from private repositories | false |
+| `--user` | `GITHUB_USER` | GitHub username to fetch | authenticated user |
+| `--since` | `GITHUB_SINCE` | Start of window (`YYYY-MM-DD` or RFC3339) | 7 days ago |
+| `--until` | `GITHUB_UNTIL` | End of window (`YYYY-MM-DD` or RFC3339) | now |
+| `-o`, `--output` | `GITHUB_OUTPUT` | Write output to a file | stdout |
+| `--template` | `GITHUB_TEMPLATE` | Path to a custom template file | embedded default |
+| `--include-private` | `GITHUB_INCLUDE_PRIVATE` | Include events from private repositories | false |
 | `--config` | | Path to a config file | `./github-to-markdown.yaml` |
-| `-v`, `--verbose` | | Verbose logging | false |
-| `--debug` | | Debug logging | false |
-| `--log-json` | | JSON log format | false |
+| `-v`, `--verbose` | `GITHUB_VERBOSE` | Verbose logging | false |
+| `--debug` | `GITHUB_DEBUG` | Debug logging | false |
+| `--log-json` | `GITHUB_LOG_JSON` | JSON log format | false |
+
+Every config key is reachable via `GITHUB_<KEY>` (uppercase, `.` → `_`).
 
 `YYYY-MM-DD` dates are parsed in the local timezone. `--until` interpreted as
 a date is treated as end-of-day, so `--since 2026-05-11 --until 2026-05-18`
