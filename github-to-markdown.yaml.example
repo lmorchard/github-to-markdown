@@ -1,0 +1,25 @@
+# Configuration file for github-to-markdown
+# Copy this to github-to-markdown.yaml and customize as needed.
+# CLI flags override these values; the GITHUB_TOKEN env var also works for `token`.
+
+# GitHub personal access token (prefer the GITHUB_TOKEN env var over storing this here)
+# token: "ghp_xxxxxxxxxxxxxxxxxxxx"
+
+# GitHub username to fetch activity for. Defaults to the authenticated user.
+# user: "lmorchard"
+
+# Time window. Accepts YYYY-MM-DD or RFC3339. Defaults: since = now-7d, until = now.
+# since: "2026-05-11"
+# until: "2026-05-18"
+
+# Output file. Empty / unset means stdout.
+# output: "activity.md"
+
+# Path to a custom template file. Empty / unset means the embedded default.
+# Run `github-to-markdown init` to generate a copy you can edit.
+# template: "github-to-markdown.md"
+
+# Logging
+verbose: false
+debug: false
+log_json: false
