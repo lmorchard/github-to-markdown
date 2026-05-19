@@ -63,6 +63,28 @@ func TestNormalize_UnknownType(t *testing.T) {
 	}
 }
 
+func TestFilterPublic(t *testing.T) {
+	events := []Event{
+		{ID: "1", Public: true},
+		{ID: "2", Public: false},
+		{ID: "3", Public: true},
+		{ID: "4", Public: false},
+	}
+	got := FilterPublic(events)
+	if len(got) != 2 {
+		t.Fatalf("len(got) = %d, want 2", len(got))
+	}
+	if got[0].ID != "1" || got[1].ID != "3" {
+		t.Errorf("FilterPublic kept wrong events: %+v", got)
+	}
+}
+
+func TestFilterPublic_Empty(t *testing.T) {
+	if got := FilterPublic(nil); len(got) != 0 {
+		t.Errorf("nil input should yield empty result, got %v", got)
+	}
+}
+
 func TestParseNextLink(t *testing.T) {
 	cases := []struct {
 		in, want string

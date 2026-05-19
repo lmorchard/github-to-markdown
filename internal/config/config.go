@@ -20,4 +20,9 @@ type Config struct {
 
 	// Path to a custom template file ("" = embedded default)
 	Template string
+
+	// IncludePrivate includes events from private repositories.
+	// Off by default — the events feed otherwise returns private-repo activity
+	// any time the token can see it.
+	IncludePrivate bool
 }

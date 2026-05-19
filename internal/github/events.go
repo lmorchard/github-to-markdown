@@ -259,6 +259,19 @@ func Normalize(ev Event) Normalized {
 	return n
 }
 
+// FilterPublic returns only the public events from the input slice.
+// The events-feed endpoint mixes public and private-repo events whenever
+// the token can see them; this drops the private ones.
+func FilterPublic(events []Event) []Event {
+	out := events[:0:0]
+	for _, ev := range events {
+		if ev.Public {
+			out = append(out, ev)
+		}
+	}
+	return out
+}
+
 func firstLine(s string) string {
 	if i := strings.IndexByte(s, '\n'); i >= 0 {
 		return s[:i]

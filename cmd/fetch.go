@@ -54,6 +54,13 @@ func runFetch(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("fetch events: %w", err)
 	}
+	total := len(events)
+	if !c.IncludePrivate {
+		events = github.FilterPublic(events)
+		if dropped := total - len(events); dropped > 0 {
+			log.Infof("Dropped %d private event(s) (pass --include-private to keep)", dropped)
+		}
+	}
 	log.Infof("Got %d event(s) in window", len(events))
 
 	data := render.Build(user, since, until, events)

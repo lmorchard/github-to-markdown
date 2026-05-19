@@ -19,6 +19,10 @@
 # Run `github-to-markdown init` to generate a copy you can edit.
 # template: "github-to-markdown.md"
 
+# Include events from private repositories. Off by default — the events feed
+# returns private-repo activity whenever the token can see it.
+# include_private: false
+
 # Logging
 verbose: false
 debug: false

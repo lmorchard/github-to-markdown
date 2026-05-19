@@ -58,6 +58,7 @@ func init() {
 	rootCmd.Flags().String("until", "", "end of time window (YYYY-MM-DD or RFC3339; default: now)")
 	rootCmd.Flags().StringP("output", "o", "", "write output to file (default: stdout)")
 	rootCmd.Flags().String("template", "", "path to custom template file (default: embedded)")
+	rootCmd.Flags().Bool("include-private", false, "include events from private repositories")
 
 	// Bind flags to viper
 	_ = viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
@@ -69,6 +70,7 @@ func init() {
 	_ = viper.BindPFlag("until", rootCmd.Flags().Lookup("until"))
 	_ = viper.BindPFlag("output", rootCmd.Flags().Lookup("output"))
 	_ = viper.BindPFlag("template", rootCmd.Flags().Lookup("template"))
+	_ = viper.BindPFlag("include_private", rootCmd.Flags().Lookup("include-private"))
 
 	// Map env vars: GITHUB_TOKEN -> token
 	_ = viper.BindEnv("token", "GITHUB_TOKEN")
@@ -127,15 +129,16 @@ func setupLogging() {
 func GetConfig() *config.Config {
 	if cfg == nil {
 		cfg = &config.Config{
-			Verbose:  viper.GetBool("verbose"),
-			Debug:    viper.GetBool("debug"),
-			LogJSON:  viper.GetBool("log_json"),
-			Token:    viper.GetString("token"),
-			User:     viper.GetString("user"),
-			Since:    viper.GetString("since"),
-			Until:    viper.GetString("until"),
-			Output:   viper.GetString("output"),
-			Template: viper.GetString("template"),
+			Verbose:        viper.GetBool("verbose"),
+			Debug:          viper.GetBool("debug"),
+			LogJSON:        viper.GetBool("log_json"),
+			Token:          viper.GetString("token"),
+			User:           viper.GetString("user"),
+			Since:          viper.GetString("since"),
+			Until:          viper.GetString("until"),
+			Output:         viper.GetString("output"),
+			Template:       viper.GetString("template"),
+			IncludePrivate: viper.GetBool("include_private"),
 		}
 	}
 	return cfg

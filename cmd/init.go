@@ -27,6 +27,10 @@ const defaultConfigContent = `# Configuration file for github-to-markdown
 # Path to a custom template file. Empty / unset means the embedded default.
 # template: "github-to-markdown.md"
 
+# Include events from private repositories. Off by default — the events feed
+# returns private-repo activity whenever the token can see it.
+# include_private: false
+
 # Logging
 verbose: false
 debug: false
