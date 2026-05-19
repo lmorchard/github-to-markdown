@@ -71,9 +71,17 @@ Pragmatic recommendation: classic PAT with the `repo` scope.
 
 ```
 github-to-markdown [flags]
+github-to-markdown export --since <date|duration> [--until <date>] [-o <file>]
 github-to-markdown init
 github-to-markdown version
 ```
+
+The `export` subcommand exposes the canonical `--since/--until/-o` flag
+shape used by [`me-to-markdown`](https://github.com/lmorchard/me-to-markdown)
+and the rest of the `*-to-markdown` family. It's a thin wrapper over the
+same pipeline as the root command — `--since` additionally accepts a Go
+duration (e.g. `168h`) on `export`, and other settings (token, user,
+template, include-private) come from the config file or environment.
 
 ### Flags
 

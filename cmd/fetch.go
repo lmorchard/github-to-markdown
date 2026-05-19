@@ -16,11 +16,6 @@ const defaultLookback = 7 * 24 * time.Hour
 
 func runFetch(cmd *cobra.Command, args []string) error {
 	c := GetConfig()
-	log := GetLogger()
-
-	if c.Token == "" {
-		return fmt.Errorf("no GitHub token provided (set GITHUB_TOKEN or pass --token)")
-	}
 
 	now := time.Now()
 	since, err := parseWhen(c.Since, now.Add(-defaultLookback), false)
@@ -31,17 +26,34 @@ func runFetch(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("--until: %w", err)
 	}
+
+	return runExportPipeline(context.Background(), since, until, c.Output)
+}
+
+// runExportPipeline executes the GitHub events fetch + render pipeline for the
+// given time window, writing to outputPath (empty = stdout). All other
+// settings (token, user, template, include-private) come from the GetConfig()
+// values.
+//
+// Used by both the root command (fetch behavior) and the export subcommand.
+func runExportPipeline(ctx context.Context, since, until time.Time, outputPath string) error {
+	c := GetConfig()
+	log := GetLogger()
+
+	if c.Token == "" {
+		return fmt.Errorf("no GitHub token provided (set GITHUB_TOKEN or pass --token)")
+	}
 	if !until.After(since) {
 		return fmt.Errorf("--until (%s) must be after --since (%s)",
 			until.Format(time.RFC3339), since.Format(time.RFC3339))
 	}
 
 	client := github.NewClient(c.Token)
-	ctx := context.Background()
 
 	user := c.User
 	if user == "" {
 		log.Debug("resolving authenticated user")
+		var err error
 		user, err = client.AuthenticatedUser(ctx)
 		if err != nil {
 			return fmt.Errorf("resolve user: %w", err)
@@ -65,7 +77,7 @@ func runFetch(cmd *cobra.Command, args []string) error {
 
 	data := render.Build(user, since, until, events)
 
-	out, closeFn, err := openOutput(c.Output)
+	out, closeFn, err := openOutput(outputPath)
 	if err != nil {
 		return err
 	}
@@ -74,8 +86,8 @@ func runFetch(cmd *cobra.Command, args []string) error {
 	if err := render.Render(out, c.Template, data); err != nil {
 		return err
 	}
-	if c.Output != "" {
-		log.Infof("Wrote %s", c.Output)
+	if outputPath != "" {
+		log.Infof("Wrote %s", outputPath)
 	}
 	return nil
 }
