@@ -1,8 +1,6 @@
 module github.com/lmorchard/github-to-markdown
 
-go 1.21.0
-
-toolchain go1.22.2
+go 1.25.0
 
 require (
 	github.com/sirupsen/logrus v1.9.3
