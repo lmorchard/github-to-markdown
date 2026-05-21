@@ -34,6 +34,47 @@ func TestNormalize_PushEvent(t *testing.T) {
 	}
 }
 
+// As of late 2025, the events API returns PushEvent payloads with only
+// before / head / push_id / ref / repository_id — no size, no commits.
+// We should still produce a useful summary and a compare-view link.
+func TestNormalize_PushEvent_StrippedPayload(t *testing.T) {
+	payload := json.RawMessage(`{
+		"push_id": 12345,
+		"ref": "refs/heads/main",
+		"before": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		"head":   "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+		"repository_id": 999
+	}`)
+	n := Normalize(Event{Type: "PushEvent", Repo: Repo{Name: "lmorchard/foo"}, Payload: payload})
+	if n.Kind != "Push" {
+		t.Errorf("Kind = %q, want Push", n.Kind)
+	}
+	if want := "pushed to `main`"; n.Summary != want {
+		t.Errorf("Summary = %q, want %q", n.Summary, want)
+	}
+	if want := "https://github.com/lmorchard/foo/compare/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"; n.URL != want {
+		t.Errorf("URL = %q, want %q", n.URL, want)
+	}
+}
+
+// First push to a brand-new branch (or force-push that obliterates
+// history) has `before` set to the all-zero sentinel SHA. The compare
+// URL would 404, so we fall back to a direct link to the head commit.
+func TestNormalize_PushEvent_ZeroBefore(t *testing.T) {
+	payload := json.RawMessage(`{
+		"ref": "refs/heads/feature-x",
+		"before": "0000000000000000000000000000000000000000",
+		"head":   "cccccccccccccccccccccccccccccccccccccccc"
+	}`)
+	n := Normalize(Event{Type: "PushEvent", Repo: Repo{Name: "lmorchard/foo"}, Payload: payload})
+	if want := "pushed to `feature-x`"; n.Summary != want {
+		t.Errorf("Summary = %q, want %q", n.Summary, want)
+	}
+	if want := "https://github.com/lmorchard/foo/commit/cccccccccccccccccccccccccccccccccccccccc"; n.URL != want {
+		t.Errorf("URL = %q, want %q", n.URL, want)
+	}
+}
+
 func TestNormalize_PullRequestMerged(t *testing.T) {
 	payload := json.RawMessage(`{
 		"action": "closed",

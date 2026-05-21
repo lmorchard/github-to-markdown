@@ -51,8 +51,16 @@ func Normalize(ev Event) Normalized {
 
 	switch ev.Type {
 	case "PushEvent":
+		// As of late 2025 the events API (/users/{user}/events and friends)
+		// stopped returning size / distinct_size / commits on PushEvent
+		// payloads — only ref / before / head / push_id / repository_id
+		// come back. We still parse the legacy shape in case it ever
+		// reappears (and for tests), but compose output that's honest
+		// when those fields are missing.
 		var p struct {
 			Ref     string `json:"ref"`
+			Before  string `json:"before"`
+			Head    string `json:"head"`
 			Size    int    `json:"size"`
 			Commits []struct {
 				SHA     string `json:"sha"`
@@ -61,15 +69,25 @@ func Normalize(ev Event) Normalized {
 		}
 		_ = json.Unmarshal(ev.Payload, &p)
 		branch := strings.TrimPrefix(p.Ref, "refs/heads/")
-		first := ""
-		if len(p.Commits) > 0 {
-			first = firstLine(p.Commits[0].Message)
-		}
 		n.Kind = "Push"
-		n.Summary = fmt.Sprintf("pushed %d commit(s) to `%s`: %s", p.Size, branch, first)
-		if len(p.Commits) > 0 {
+		switch {
+		case p.Size > 0 && len(p.Commits) > 0:
+			// Legacy / test path: full payload available.
+			n.Summary = fmt.Sprintf("pushed %d commit(s) to `%s`: %s", p.Size, branch, firstLine(p.Commits[0].Message))
 			n.URL = fmt.Sprintf("https://github.com/%s/commit/%s", ev.Repo.Name, p.Commits[0].SHA)
-		} else {
+		case isRealSHA(p.Before) && isRealSHA(p.Head):
+			// Current API path: only before/head SHAs. Link to the
+			// compare view so the reader can see what actually shipped.
+			n.Summary = fmt.Sprintf("pushed to `%s`", branch)
+			n.URL = fmt.Sprintf("https://github.com/%s/compare/%s...%s", ev.Repo.Name, p.Before, p.Head)
+		case isRealSHA(p.Head):
+			// First push to a branch, or before is the zero SHA. Link
+			// to the head commit directly.
+			n.Summary = fmt.Sprintf("pushed to `%s`", branch)
+			n.URL = fmt.Sprintf("https://github.com/%s/commit/%s", ev.Repo.Name, p.Head)
+		default:
+			// No useful SHAs; fall back to the branch's commit listing.
+			n.Summary = fmt.Sprintf("pushed to `%s`", branch)
 			n.URL = fmt.Sprintf("https://github.com/%s/commits/%s", ev.Repo.Name, branch)
 		}
 
@@ -277,6 +295,21 @@ func firstLine(s string) string {
 		return s[:i]
 	}
 	return s
+}
+
+// isRealSHA returns true for a 40-char hex SHA that isn't the all-zero
+// sentinel git uses for "no parent" (initial branch push, force-push to
+// delete commits, etc.).
+func isRealSHA(s string) bool {
+	if len(s) != 40 {
+		return false
+	}
+	for _, c := range s {
+		if (c < '0' || c > '9') && (c < 'a' || c > 'f') {
+			return false
+		}
+	}
+	return s != "0000000000000000000000000000000000000000"
 }
 
 func snippet(s string, max int) string {
